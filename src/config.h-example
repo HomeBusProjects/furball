@@ -1,0 +1,18 @@
+#define WIFI_SSID     "YOUR WIFI SSID"
+#define WIFI_PASSWORD "YOUR WIFI PASSWORD"
+
+#define FURBALL_HOSTNAME "dustball"
+
+#define AIO_SERVER      "io.adafruit.comx"
+#define AIO_SERVERPORT  1883
+#define AIO_USERNAME    "YOUR ADAFRUIT IO PUSERNAME"
+#define AIO_KEY         "YOUR ADAFRUIT IO API KEY"
+
+// update once every UPDATE_DELAY milliseconds
+#define UPDATE_DELAY 60*1000
+
+#define REST_API_ENDPOINT "http://dustball.herokuapp.com/samples"
+
+// IFTTT boot notifications
+#define IFTTT_API_KEY    "YOUR IFTTT API KEY"
+#define IFTTT_EVENT_NAME "dustball"

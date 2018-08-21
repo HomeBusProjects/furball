@@ -1,0 +1,45 @@
+# editorconfig.org
+
+root = true
+
+[*]
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+indent_style = space
+indent_size = 2
+
+[*.txt]
+indent_style = tab
+indent_size = 4
+insert_final_newline = true
+max_line_length = 131
+
+[*.{diff,md}]
+trim_trailing_whitespace = false
+
+# C/C++ Files
+[*.{c,cpp,h,ino}]
+curly_bracket_next_line = true
+indent_brace_style = Allman
+
+# Javascript/JSON files
+[*.{json,js}]
+indent_size = 2
+
+# Shell scripts
+[*.sh]
+end_of_line = lf
+
+[*.{html,css}]
+indent_style = tab
+indent_size = 2
+
+[*.rb]
+indent_style = space
+indent_size = 2
+
+[*.yml]
+indent_style = space
+indent_size = 2

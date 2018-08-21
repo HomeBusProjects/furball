@@ -32,3 +32,5 @@
 *.app
 .pioenvs
 .piolibdeps
+
+config.h
