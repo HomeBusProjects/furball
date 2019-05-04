@@ -26,9 +26,9 @@ The board would benefit from better documentation on its silkscreen (resistors a
 
 ## Assembly
 
-1. The PMS5003 and Sparkfun QUIIC connectors are both surface mount and for most people will be the most challenging part of assembling this board. They're both optional. If you're going to use them, I recommend soldering them first.
+1. The PMS5003 and Sparkfun QUIIC connectors are both surface mount and for most people will be the most challenging part of assembling this board. They're both optional. If you're going to use them, I recommend soldering them first.  
 
-  The technique I use is to apply solder to all the pads for both connectors using a fine tip on the soldering iron and fine solder (0.6mm).
+  The technique I use is to apply solder to all the pads for both connectors using a fine tip on the soldering iron and fine solder (0.6mm).  
 
   Then I carefully, using my fingertips or needlenose pliers or tweezers, position the connector on top of the pads and use the soldering iron to melt one of the sides. I let that cool and then carefully melt each connection until the entire connector has solid contact with the board and solder.
 
