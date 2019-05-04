@@ -4,6 +4,8 @@ The Furball is based on an ESP32 processor.
 
 The ESP32 supports IEEE802.11b/g/n wifi as well as Bluetooth 4.0 and BLE.
 
+![Furball's major parts](docs/img/furballv3-major-parts.jpg)
+
 Furball uses I2C to communicate with a BME280 (air temperature, humidity and pressure) or BME680 (air temperature, humidity, pressure and volatile organics) and a TSL2561 (light intensity).
 
 It also expresses the I2C bus via both a 4 pin header and a Sparkfun QUICC connector so that you can easily add external I2C devices if you want.
@@ -20,15 +22,15 @@ The Furball v4 board was designed using [Autodesk Eagle](https://www.autodesk.co
 
 There are currently no known issues with the board but I cannot guarantee it will work 100% correctly and that no issues will be found in the future. *Use at your own risk*.
 
-The board would benefit from better documentation on its silkscreen.
+The board would benefit from better documentation on its silkscreen (resistors and capacitors are not well-labelled).
 
 ## Assembly
 
 1. The PMS5003 and Sparkfun QUIIC connectors are both surface mount and for most people will be the most challenging part of assembling this board. They're both optional. If you're going to use them, I recommend soldering them first.
 
-The technique I use is to apply solder to all the pads for both connectors using a fine tip on the soldering iron and fine solder (0.6mm).
+  The technique I use is to apply solder to all the pads for both connectors using a fine tip on the soldering iron and fine solder (0.6mm).
 
-Then I carefully, using my fingertips or needlenose pliers or tweezers, position the connector on top of the pads and use the soldering iron to melt one of the sides. I let that cool and then carefully melt each connection until the entire connector has solid contact with the board and solder.
+  Then I carefully, using my fingertips or needlenose pliers or tweezers, position the connector on top of the pads and use the soldering iron to melt one of the sides. I let that cool and then carefully melt each connection until the entire connector has solid contact with the board and solder.
 
 2. I solder headers on the ESP32 breakout board as well as the other boards that I'm using in the project.
 
@@ -49,6 +51,8 @@ Then I carefully, using my fingertips or needlenose pliers or tweezers, position
 - one 100
 
 This is a good time to run the diagnostic again in order to make sure the board still works.
+
+![Furball's resistors and capacitors](docs/img/furballv3-values.jpg)
 
 8. Finally, solder whichever headers you want to use. You can ignore ones you don't need, and you can always add them later if you want.
 
