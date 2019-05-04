@@ -1,3 +1,4 @@
+#include "hw.h"
 #include "pms_sensor.h"
 
 void PMS_Sensor::begin(HardwareSerial port) {
@@ -5,7 +6,9 @@ void PMS_Sensor::begin(HardwareSerial port) {
 
   //  _pms = new PMS(Serial1);
 
-  port.begin(9600, (uint32_t)SERIAL_8N1, 25, 26);
+  // 16 - ESP32 xmt
+  // 17 - ESP32 rcv
+  port.begin(9600, (uint32_t)SERIAL_8N1, 17, 16);
   _pms = new PMS(port);
 
   _pms->passiveMode();

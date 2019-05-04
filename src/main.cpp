@@ -3,35 +3,31 @@
 #include <ESP.h>
 #include <ESPmDNS.h>
 #include <WiFi.h>
+#include <WiFiMulti.h>
 #include <HTTPClient.h>
 
 #include "config.h"
+#include "hw.h"
 
 #include <ArduinoOTA.h>
 
-#include "bme280_sensor.h"
-#include "ccs811_sensor.h"
+#include "bme680_sensor.h"
 #include "tsl2561_sensor.h"
-#include "adxl345_sensor.h"
-#include "lis3dh_sensor.h"
 #include "pms_sensor.h"
 
 #include "pir_sensor.h"
 #include "sound_level_sensor.h"
 
-#define BUTTON_PIN 33
-#define PIR_PIN 34
-#define SOUND_PIN 35
-
-BME280_Sensor bme280(UPDATE_DELAY, 0, 0, false);
-CCS811_Sensor ccs811(UPDATE_DELAY, 0, 0, false);
+BME680_Sensor bme680(UPDATE_DELAY, 0, 0, false);
 TSL2561_Sensor tsl2561(UPDATE_DELAY, 0, 0, false);
-ADXL345_Sensor adxl345(UPDATE_DELAY, 0, 0, false);
-LIS3DH_Sensor lis3dh(UPDATE_DELAY, 0, 0, false);
 PMS_Sensor pms5003(UPDATE_DELAY, 0, 0, false);
 
 PIR_Sensor pir(1, UPDATE_DELAY, 0, 0, false);
 SoundLevel_Sensor sound_level(SOUND_PIN, UPDATE_DELAY, 0, 0, false);
+
+#include "led.h"
+
+LED led(LED_RED, LED_GREEN, LED_BLUE);
 
 #include "uptime.h"
 
@@ -40,6 +36,8 @@ Uptime uptime;
 #include <JC_Button.h>   
 
 Button the_button(BUTTON_PIN);
+
+WiFiMulti wifiMulti;
 
 // HomeBus is not ready for Prime Time so leave this out for now
 #ifdef HOMEBUS
@@ -87,18 +85,6 @@ HomeBusDevice hb_ccs811_voc(&hb,
 			    1000,
 			    true,
 			    "voc",
-			    "",
-			    ""
-			    );
-
-HomeBusDevice hb_ccs811_voc(&hb,
-			    "CO2",
-			    "HomeBus One",
-			    100,
-			    100,
-			    1000,
-			    false,
-			    "co2",
 			    "",
 			    ""
 			    );
@@ -163,7 +149,7 @@ void mqtt_connect(void) {
 
 #include <rom/rtc.h>
 
-char* reboot_reason(int code) {
+const char* reboot_reason(int code) {
   switch(code) {
     case 1 : return "POWERON_RESET";          /**<1, Vbat power on reset*/
     case 3 : return "SW_RESET";               /**<3, Software reset digital core*/
@@ -184,39 +170,42 @@ char* reboot_reason(int code) {
   }
 }
   
+static char hostname[sizeof("furball-%02x%02x%02x")];
+
 void setup() {
-  char hostname[sizeof(FURBALL_HOSTNAME) + 8];
   byte mac_address[6];
 
-  delay(5000);
+  delay(500);
 
   Serial.begin(115200);
   Serial.println("Hello World!");
 
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-
   WiFi.macAddress(mac_address);
-  snprintf(hostname, sizeof(hostname), "%s %02x%02x%02x", FURBALL_HOSTNAME, (int)mac_address[3], (int)mac_address[4], (int)mac_address[5]);
+  snprintf(hostname, sizeof(hostname), "furball-%02x%02x%02x", (int)mac_address[3], (int)mac_address[4], (int)mac_address[5]);
   Serial.printf("Hostname is %s\n", hostname);
 
   WiFi.setHostname(hostname);
-  while(!WiFi.isConnected()) {
+
+  wifiMulti.addAP(WIFI_SSID1, WIFI_PASSWORD1);
+  wifiMulti.addAP(WIFI_SSID2, WIFI_PASSWORD2);
+  wifiMulti.addAP(WIFI_SSID3, WIFI_PASSWORD3);
+
+  while(wifiMulti.run() != WL_CONNECTED) {
     Serial.print(".");
     delay(100);
   }
 
-  Serial.println();
-  Serial.println("Connected!");
+  Serial.println("[wifi]");
 
   ifttt.trigger("reboot", reboot_reason(rtc_get_reset_reason(0)),  reboot_reason(rtc_get_reset_reason(1)));
 
   if(!MDNS.begin(hostname))
     Serial.println("Error setting up MDNS responder!");
   else
-    Serial.println("mDNS responder started");
+    Serial.println("[mDNS]");
 
-  Serial.println("MQTT");
   mqtt_connect();
+  Serial.println("[adafruitIO]");
 
 #ifdef ESP32
    ArduinoOTA
@@ -249,28 +238,25 @@ void setup() {
 
   ArduinoOTA.begin();
 
-  bme280.begin();
-  ccs811.begin();
+  bme680.begin();
   tsl2561.begin();
-  adxl345.begin();
-  lis3dh.begin();
   pms5003.begin(Serial1);
 
   pir.begin();
   sound_level.begin();
 
-  Serial.printf("BME280 status %s\n", bme280.status_str());
-  Serial.printf("CCS811 status %s\n", ccs811.status_str());
+  Serial.printf("BME680 status %s\n", bme680.status_str());
   Serial.printf("TSL2561 status %s\n", tsl2561.status_str());
-  Serial.printf("ADXL345 status %s\n", adxl345.status_str());
-  Serial.printf("lis3hd status %s\n", lis3dh.status_str());
 
   Serial.println();
   Serial.println();
   Serial.printf("PIR status %s\n", pir.status_str());
   Serial.printf("Sound level status %s\n", sound_level.status_str());
 
-  delay(5000);
+  led.begin();
+  Serial.println("[led]");
+
+  delay(500);
 }
 
 
@@ -279,31 +265,21 @@ void loop() {
 
   ArduinoOTA.handle();
 
-  bme280.handle();
-  ccs811.handle();
+  bme680.handle();
   tsl2561.handle();
-  lis3dh.handle();
   pms5003.handle();
 
   sound_level.handle();
   pir.handle();
 
-  if(bme280.ready_for_update()) {
-    temperature_feed.publish(bme280.temperature());
-    pressure_feed.publish(bme280.pressure());
-    humidity_feed.publish(bme280.humidity());
+  if(bme680.ready_for_update()) {
+    temperature_feed.publish(bme680.temperature());
+    pressure_feed.publish(bme680.pressure());
+    humidity_feed.publish(bme680.humidity());
 
-    Serial.printf("Temperature %d\n", bme280.temperature());
-    Serial.printf("Pressure %d\n", bme280.pressure());
-    Serial.printf("Humidity %d\n", bme280.humidity());
-  }
-
-  if(ccs811.ready_for_update()) {
-    eco2_feed.publish(ccs811.eco2());
-    voc_feed.publish(ccs811.voc());
-
-    Serial.printf("ECO2 %d\n", ccs811.eco2());
-    Serial.printf("VOC %d\n", ccs811.voc());
+    Serial.printf("Temperature %d\n", bme680.temperature());
+    Serial.printf("Pressure %d\n", bme680.pressure());
+    Serial.printf("Humidity %d\n", bme680.humidity());
   }
 
   if(tsl2561.ready_for_update()) {
@@ -314,18 +290,6 @@ void loop() {
     Serial.printf("Visible %d\n", tsl2561.visible());
     Serial.printf("Full %d\n", tsl2561.full());
     Serial.printf("Lux %d\n", tsl2561.lux());
-  }
-
-  if(lis3dh.ready_for_update()) {
-    Serial.printf("LIS3DH x %d\n", lis3dh.accel_x());
-    Serial.printf("LIS3DH y %d\n", lis3dh.accel_y());
-    Serial.printf("LIS3DH z %d\n", lis3dh.accel_z());
-  }
-
-  if(adxl345.ready_for_update()) {
-    Serial.printf("ADXL345 x %d\n", adxl345.accel_x());
-    Serial.printf("ADXL345 y %d\n", adxl345.accel_y());
-    Serial.printf("ADXL345 z %d\n", adxl345.accel_z());
   }
 
   if(pms5003.ready_for_update()) {
@@ -361,14 +325,17 @@ void loop() {
 
 #ifdef REST_API_ENDPOINT
   char buffer[500];
-  snprintf(buffer, 500, "{\"temperature\": %d, \"humidity\": %d, \"pressure\": %d, \"eco2\": %d, \"tvoc\": %d, \"pm1\": %d, \"pm25\": %d, \"pm10\": %d, \"freeheap\": %d, \"uptime\": %lu, \"lux\": %d, \"full_light\": %d, \"ir\": %d, \"visible\": %d }",
-	   bme280.temperature(), bme280.humidity(), bme280.pressure(),
-	   ccs811.eco2(), ccs811.voc(), 
-	   pms5003.density_1_0(), pms5003.density_2_5(), pms5003.density_10_0(),
-	   ESP.getFreeHeap(), uptime.uptime()/1000,
-	   tsl2561.lux(), tsl2561.full(), tsl2561.ir(), tsl2561.visible());
+  snprintf(buffer, 500, "{ \"system\": { \"name\": \"%s\", \"freeheap\": %d, \"uptime\": %lu }, \"environment\": { \"temperature\": %d, \"humidity\": %d, \"pressure\": %d }, \"air\": {  \"tvoc\": %0.2f, \"pm1\": %d, \"pm25\": %d, \"pm10\": %d }, \"light\": {  \"lux\": %d, \"full_light\": %d, \"ir\": %d, \"visible\": %d }, \"presence\": %d }",
+	   hostname, ESP.getFreeHeap(), uptime.uptime()/1000,
+	   bme680.temperature(), bme680.humidity(), bme680.pressure(),
+	   bme680.gas_resistance(), pms5003.density_1_0(), pms5003.density_2_5(), pms5003.density_10_0(),
+	   tsl2561.lux(), tsl2561.full(), tsl2561.ir(), tsl2561.visible(),
+	   pir.presence() ? true : false);
 
     Serial.println(buffer);
+
+    void post(char *);
+
     post(buffer);
 #endif
 }
