@@ -32,8 +32,6 @@ void TSL2561_Sensor::begin() {
     return;
   }
   
-  Serial.println("TSL2561 okay");
-
   _status = SENSOR_OKAY;
 
   _tsl2561.enableAutoRange(true);

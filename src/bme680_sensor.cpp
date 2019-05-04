@@ -9,8 +9,6 @@ void BME680_Sensor::begin() {
     return;
   }
 
-  Serial.println("BME OK");
-
   _bme.setTemperatureOversampling(BME680_OS_8X);
   _bme.setHumidityOversampling(BME680_OS_2X);
   _bme.setPressureOversampling(BME680_OS_4X);

@@ -18,7 +18,7 @@ void LED::begin() {
 
   _attach_pwm();
 
-  _debug();
+  //  _debug();
 }
 
 

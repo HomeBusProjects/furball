@@ -13,8 +13,6 @@ void PMS_Sensor::begin(HardwareSerial port) {
 
   _pms->passiveMode();
   _pms->wakeUp();
-
-  Serial.println("PMS begin done");
 }
 
 void PMS_Sensor::begin() {

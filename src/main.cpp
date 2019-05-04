@@ -239,19 +239,19 @@ void setup() {
   ArduinoOTA.begin();
 
   bme680.begin();
+  Serial.println("[bme680]");
+
   tsl2561.begin();
+  Serial.println("[tsl2561]");
+
   pms5003.begin(Serial1);
+  Serial.println("[pms5003]");
 
   pir.begin();
+  Serial.println("[pir]");
+
   sound_level.begin();
-
-  Serial.printf("BME680 status %s\n", bme680.status_str());
-  Serial.printf("TSL2561 status %s\n", tsl2561.status_str());
-
-  Serial.println();
-  Serial.println();
-  Serial.printf("PIR status %s\n", pir.status_str());
-  Serial.printf("Sound level status %s\n", sound_level.status_str());
+  Serial.println("[sound pressure]");
 
   led.begin();
   Serial.println("[led]");
@@ -277,27 +277,35 @@ void loop() {
     pressure_feed.publish(bme680.pressure());
     humidity_feed.publish(bme680.humidity());
 
+#ifdef VERBOSE
     Serial.printf("Temperature %d\n", bme680.temperature());
     Serial.printf("Pressure %d\n", bme680.pressure());
     Serial.printf("Humidity %d\n", bme680.humidity());
+#endif
   }
 
   if(tsl2561.ready_for_update()) {
     lux_feed.publish(tsl2561.lux());
     ir_feed.publish(tsl2561.ir());
 
+#ifdef VERBOSE
     Serial.printf("IR %d\n", tsl2561.ir());
     Serial.printf("Visible %d\n", tsl2561.visible());
     Serial.printf("Full %d\n", tsl2561.full());
     Serial.printf("Lux %d\n", tsl2561.lux());
+#endif
   }
 
   if(pms5003.ready_for_update()) {
+#ifdef VERBOSE
     Serial.printf("PMS5003 1.0 %d\n", pms5003.density_1_0());
     Serial.printf("PMS5003 2.5 %d\n", pms5003.density_2_5());
     Serial.printf("PMS5003 10.0 %d\n", pms5003.density_10_0());
+#endif
   }
 
+
+#if 0
   if(sound_level.ready_for_update()) {
     //    sound_level_feed.publish(sound_level.sound_level());
     //    Serial.printf("Sound level %d\n", sound_level.sound_level());
@@ -306,6 +314,7 @@ void loop() {
     Serial.printf("Sound level %d with %d samples\n", sound_level.sample_value(), sound_level.sample_count());
     sound_level.start_sampling();
   }
+#endif
 
   if(millis() - last_loop < UPDATE_DELAY)
     return;
@@ -325,12 +334,12 @@ void loop() {
 
 #ifdef REST_API_ENDPOINT
   char buffer[500];
-  snprintf(buffer, 500, "{ \"system\": { \"name\": \"%s\", \"freeheap\": %d, \"uptime\": %lu }, \"environment\": { \"temperature\": %d, \"humidity\": %d, \"pressure\": %d }, \"air\": {  \"tvoc\": %0.2f, \"pm1\": %d, \"pm25\": %d, \"pm10\": %d }, \"light\": {  \"lux\": %d, \"full_light\": %d, \"ir\": %d, \"visible\": %d }, \"presence\": %d }",
+  snprintf(buffer, 500, "{ \"system\": { \"name\": \"%s\", \"freeheap\": %d, \"uptime\": %lu }, \"environment\": { \"temperature\": %d, \"humidity\": %d, \"pressure\": %d }, \"air\": {  \"tvoc\": %0.2f, \"pm1\": %d, \"pm25\": %d, \"pm10\": %d }, \"light\": {  \"lux\": %d, \"full_light\": %d, \"ir\": %d, \"visible\": %d }, \"presence\": %s }",
 	   hostname, ESP.getFreeHeap(), uptime.uptime()/1000,
 	   bme680.temperature(), bme680.humidity(), bme680.pressure(),
 	   bme680.gas_resistance(), pms5003.density_1_0(), pms5003.density_2_5(), pms5003.density_10_0(),
 	   tsl2561.lux(), tsl2561.full(), tsl2561.ir(), tsl2561.visible(),
-	   pir.presence() ? true : false);
+	   pir.presence() ? "true" : "false");
 
     Serial.println(buffer);
 
