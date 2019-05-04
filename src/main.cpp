@@ -327,10 +327,14 @@ void loop() {
   }
 
   uptime_feed.publish((unsigned)uptime.uptime()/1000);
+#ifdef VERBOSE
   Serial.printf("Uptime %.2f seconds\n", uptime.uptime() / 1000.0);
+#endif
 
   freeheap_feed.publish(ESP.getFreeHeap());
+#ifdef VERBOSE
   Serial.printf("Free heap %u bytes\n", ESP.getFreeHeap());
+#endif
 
 #ifdef REST_API_ENDPOINT
   char buffer[500];
