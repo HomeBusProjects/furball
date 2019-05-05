@@ -30,15 +30,15 @@ The board would benefit from better documentation on its silkscreen (resistors a
 
   The technique I use is to apply solder to all the pads for both connectors using a fine tip on the soldering iron and fine solder (0.6mm).  
 
-  Then I carefully, using my fingertips or needlenose pliers or tweezers, position the connector on top of the pads and use the soldering iron to melt one of the sides. I let that cool and then carefully melt each connection until the entire connector has solid contact with the board and solder.
+  Then carefully, using your fingertips or needle nose pliers or tweezers, position the connector on top of the pads and use the soldering iron to melt one of the sides. Let that cool and then carefully melt each connection until the entire connector has solid contact with the board and solder.
 
-2. I solder headers on the ESP32 breakout board as well as the other boards that I'm using in the project.
+2. Solder headers on the ESP32 breakout board as well as the other boards that I'm using in the project.
 
-3. I solder the ESP32 breakout board onto the printed circuit board.
+3. Solder the ESP32 breakout board onto the printed circuit board.
 
-4. If I'm using it, I solder the TSL2561 onto the breakout board. Then I flash the board with the [ESP32 diagnostic](), run an I2C scan and confirm that the ESP32 can see the TSL2561. If it cannot I inspect the board for bad solder joints or shorts.
+4. If you're using it, solder the TSL2561 breakout board onto the main board. Then I flash the board with the [ESP32 diagnostic](), run an I2C scan and confirm that the ESP32 can see the TSL2561. If it cannot, inspect the board for bad solder joints or shorts.
 
-5. If I'm using it, I solder the BME280 or BME680 onto the board and run the ESP32 diagnostic and confirm that the ESP32 can see it and (if used) the TSL2561. Resolve any problems before proceeding.
+5. If you're using it, solder the BME280 or BME680 onto the board and run the ESP32 diagnostic and confirm that the ESP32 can see it and (if used) the TSL2561. Resolve any problems before proceeding.
 
 6. Solder the microphone breakout board, if being used.
 
@@ -64,4 +64,4 @@ This is a good time to run the diagnostic again in order to make sure the board 
 
 9. Run the diagnostic a final time and resolve any problems.
 
-10. Build and flasht the Furball firmware and watch its output to confirm that the board is working properly.
+10. Build and flash the Furball firmware and watch its output to confirm that the board is working properly.
