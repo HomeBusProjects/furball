@@ -6,10 +6,17 @@
 #include <WiFiMulti.h>
 #include <HTTPClient.h>
 
+#include <FS.h>
+#include <SPIFFS.h>
+
 #include "config.h"
 #include "hw.h"
 
 #include <ArduinoOTA.h>
+
+#include <PubSubClient.h>
+static WiFiClient wifi_mqtt_client;
+static PubSubClient mqtt_client(wifi_mqtt_client);
 
 #include "bme680_sensor.h"
 #include "tsl2561_sensor.h"
@@ -91,61 +98,8 @@ HomeBusDevice hb_ccs811_voc(&hb,
 
 #endif
 
-
-#include <Adafruit_MQTT.h>
-#include <Adafruit_MQTT_Client.h>
-
-WiFiClient client;
-
 #include <IFTTTWebhook.h>
 IFTTTWebhook ifttt(IFTTT_API_KEY, IFTTT_EVENT_NAME);
-
-Adafruit_MQTT_Client mqtt(&client, AIO_SERVER, AIO_SERVERPORT, AIO_USERNAME, AIO_KEY);
-
-Adafruit_MQTT_Publish temperature_feed(&mqtt, AIO_USERNAME "/feeds/furball.temperature");
-Adafruit_MQTT_Publish humidity_feed(&mqtt, AIO_USERNAME "/feeds/furball.humidity");
-Adafruit_MQTT_Publish pressure_feed(&mqtt, AIO_USERNAME "/feeds/furball.pressure");
-
-Adafruit_MQTT_Publish lux_feed(&mqtt, AIO_USERNAME "/feeds/furball.lux");
-Adafruit_MQTT_Publish ir_feed(&mqtt, AIO_USERNAME "/feeds/furball.ir");
-
-Adafruit_MQTT_Publish voc_feed(&mqtt, AIO_USERNAME "/feeds/furball.voc");
-Adafruit_MQTT_Publish eco2_feed(&mqtt, AIO_USERNAME "/feeds/furball.eco2");
-
-Adafruit_MQTT_Publish pir_feed(&mqtt, AIO_USERNAME "/feeds/furball.pir");
-Adafruit_MQTT_Publish sound_level_feed(&mqtt, AIO_USERNAME "/feeds/furball.sound");
-
-Adafruit_MQTT_Publish uptime_feed(&mqtt, AIO_USERNAME "/feeds/furball.uptime");
-Adafruit_MQTT_Publish freeheap_feed(&mqtt, AIO_USERNAME "/feeds/furball.freeheap");
-
-
-void mqtt_connect(void) {
-  int8_t ret;
-
-  return;
-
-  Serial.print("Connecting to Adafruit IO... ");
-
-  while ((ret = mqtt.connect()) != 0) {
-    switch (ret) {
-      case 1: Serial.println("Wrong protocol"); break;
-      case 2: Serial.println("ID rejected"); break;
-      case 3: Serial.println("Server unavail"); break;
-      case 4: Serial.println("Bad user/pass"); break;
-      case 5: Serial.println("Not authed"); break;
-      case 6: Serial.println("Failed to subscribe"); break;
-      default: Serial.println("Connection failed"); break;
-    }
-
-    if(ret >= 0)
-      mqtt.disconnect();
-
-    Serial.println("Retrying connection...");
-    delay(5000);
-  }
-
-  Serial.println("Adafruit IO Connected!");
-}
 
 #include <rom/rtc.h>
 
@@ -170,7 +124,8 @@ const char* reboot_reason(int code) {
   }
 }
   
-static char hostname[sizeof("furball-%02x%02x%02x")];
+
+static char hostname[sizeof("furball-%02x%02x%02x") + 1];
 
 void setup() {
   byte mac_address[6];
@@ -179,6 +134,10 @@ void setup() {
 
   Serial.begin(115200);
   Serial.println("Hello World!");
+
+  if(!SPIFFS.begin(true)) {
+    Serial.println("SPIFFS Mount Failed");
+    }
 
   WiFi.macAddress(mac_address);
   snprintf(hostname, sizeof(hostname), "furball-%02x%02x%02x", (int)mac_address[3], (int)mac_address[4], (int)mac_address[5]);
@@ -195,6 +154,7 @@ void setup() {
     delay(100);
   }
 
+  Serial.println(WiFi.localIP());
   Serial.println("[wifi]");
 
   ifttt.trigger("reboot", reboot_reason(rtc_get_reset_reason(0)),  reboot_reason(rtc_get_reset_reason(1)));
@@ -203,9 +163,6 @@ void setup() {
     Serial.println("Error setting up MDNS responder!");
   else
     Serial.println("[mDNS]");
-
-  mqtt_connect();
-  Serial.println("[adafruitIO]");
 
 #ifdef ESP32
    ArduinoOTA
@@ -238,6 +195,30 @@ void setup() {
 
   ArduinoOTA.begin();
 
+#if 0
+  if(!load_homebus_config()) {
+    homebus_go();
+    Serial.println("[homebus]");
+  } else {
+    // first argument is the client ID, not the server name
+    mqtt_client.setServer(MQTT_HOST, MQTT_PORT);
+    mqtt_client.connect(hostname, MQTT_USER, MQTT_PASS);
+    while(!mqtt_client.connected()) {
+      Serial.print('+');
+      delay(200);
+    }
+
+    Serial.println("[homebus]");
+    Serial.println("[mqtt]");
+  }
+#else
+    mqtt_client.setServer(MQTT_HOST, MQTT_PORT);
+    mqtt_client.connect(MQTT_UUID, MQTT_USER, MQTT_PASS);
+
+    Serial.println("[homebus]");
+    Serial.println("[mqtt]");
+#endif
+
   bme680.begin();
   Serial.println("[bme680]");
 
@@ -262,6 +243,18 @@ void setup() {
 
 void loop() {
   static unsigned long last_loop = 0;
+  static unsigned long last_mqtt_check = 0;
+
+  mqtt_client.loop();
+
+  if(millis() > last_mqtt_check + 5000) {
+    if(!mqtt_client.connected()) {
+      mqtt_client.connect(MQTT_UUID, MQTT_USER, MQTT_PASS);
+      Serial.println("mqtt reconnect");
+    }
+
+    last_mqtt_check = millis();
+  }
 
   ArduinoOTA.handle();
 
@@ -273,10 +266,6 @@ void loop() {
   pir.handle();
 
   if(bme680.ready_for_update()) {
-    temperature_feed.publish(bme680.temperature());
-    pressure_feed.publish(bme680.pressure());
-    humidity_feed.publish(bme680.humidity());
-
 #ifdef VERBOSE
     Serial.printf("Temperature %d\n", bme680.temperature());
     Serial.printf("Pressure %d\n", bme680.pressure());
@@ -285,9 +274,6 @@ void loop() {
   }
 
   if(tsl2561.ready_for_update()) {
-    lux_feed.publish(tsl2561.lux());
-    ir_feed.publish(tsl2561.ir());
-
 #ifdef VERBOSE
     Serial.printf("IR %d\n", tsl2561.ir());
     Serial.printf("Visible %d\n", tsl2561.visible());
@@ -310,35 +296,24 @@ void loop() {
     //    sound_level_feed.publish(sound_level.sound_level());
     //    Serial.printf("Sound level %d\n", sound_level.sound_level());
 
-    sound_level_feed.publish(sound_level.sample_value());
     Serial.printf("Sound level %d with %d samples\n", sound_level.sample_value(), sound_level.sample_count());
     sound_level.start_sampling();
   }
 #endif
 
-  if(millis() - last_loop < UPDATE_DELAY)
+  if(millis() - last_loop < UPDATE_DELAY || !mqtt_client.connected())
     return;
 
   last_loop = millis();
 
-  if(! mqtt.ping(3)) {
-    if(! mqtt.connected())
-      mqtt_connect();
-  }
-
-  uptime_feed.publish((unsigned)uptime.uptime()/1000);
 #ifdef VERBOSE
   Serial.printf("Uptime %.2f seconds\n", uptime.uptime() / 1000.0);
-#endif
-
-  freeheap_feed.publish(ESP.getFreeHeap());
-#ifdef VERBOSE
   Serial.printf("Free heap %u bytes\n", ESP.getFreeHeap());
 #endif
 
-#ifdef REST_API_ENDPOINT
   char buffer[500];
-  snprintf(buffer, 500, "{ \"system\": { \"name\": \"%s\", \"freeheap\": %d, \"uptime\": %lu }, \"environment\": { \"temperature\": %d, \"humidity\": %d, \"pressure\": %d }, \"air\": {  \"tvoc\": %0.2f, \"pm1\": %d, \"pm25\": %d, \"pm10\": %d }, \"light\": {  \"lux\": %d, \"full_light\": %d, \"ir\": %d, \"visible\": %d }, \"presence\": %s }",
+  snprintf(buffer, 500, "{ \"id\": \"%s\", \"system\": { \"name\": \"%s\", \"freeheap\": %d, \"uptime\": %lu }, \"environment\": { \"temperature\": %d, \"humidity\": %d, \"pressure\": %d }, \"air\": {  \"tvoc\": %0.2f, \"pm1\": %d, \"pm25\": %d, \"pm10\": %d }, \"light\": {  \"lux\": %d, \"full_light\": %d, \"ir\": %d, \"visible\": %d }, \"presence\": %s }",
+	   MQTT_UUID,
 	   hostname, ESP.getFreeHeap(), uptime.uptime()/1000,
 	   bme680.temperature(), bme680.humidity(), bme680.pressure(),
 	   bme680.gas_resistance(), pms5003.density_1_0(), pms5003.density_2_5(), pms5003.density_10_0(),
@@ -346,13 +321,15 @@ void loop() {
 	   pir.presence() ? "true" : "false");
 
     Serial.println(buffer);
+    mqtt_client.publish("/furball", buffer, true);
 
+#ifdef REST_API_ENDPOINT
     void post(char *);
-
     post(buffer);
 #endif
 }
 
+#ifdef REST_API_ENDPOINT
 void post(char *json) {
   HTTPClient http;
 
@@ -367,3 +344,4 @@ void post(char *json) {
 
   http.end();
 }
+#endif
