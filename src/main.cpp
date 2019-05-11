@@ -165,6 +165,7 @@ void setup() {
     Serial.println("[mDNS]");
 
 #ifdef ESP32
+  ArduinoOTA.setHostname(hostname);
    ArduinoOTA
     .onStart([]() {
       String type;
@@ -235,6 +236,7 @@ void setup() {
   Serial.println("[sound pressure]");
 
   led.begin();
+  led.off();
   Serial.println("[led]");
 
   delay(500);
@@ -262,7 +264,9 @@ void loop() {
   tsl2561.handle();
   pms5003.handle();
 
+#if 0
   sound_level.handle();
+#endif
   pir.handle();
 
   if(bme680.ready_for_update()) {
@@ -309,19 +313,22 @@ void loop() {
 #ifdef VERBOSE
   Serial.printf("Uptime %.2f seconds\n", uptime.uptime() / 1000.0);
   Serial.printf("Free heap %u bytes\n", ESP.getFreeHeap());
+  Serial.printf("Wifi RSSI %d\n", WiFi.RSSI());
 #endif
 
   char buffer[500];
-  snprintf(buffer, 500, "{ \"id\": \"%s\", \"system\": { \"name\": \"%s\", \"freeheap\": %d, \"uptime\": %lu }, \"environment\": { \"temperature\": %d, \"humidity\": %d, \"pressure\": %d }, \"air\": {  \"tvoc\": %0.2f, \"pm1\": %d, \"pm25\": %d, \"pm10\": %d }, \"light\": {  \"lux\": %d, \"full_light\": %d, \"ir\": %d, \"visible\": %d }, \"presence\": %s }",
+  IPAddress local = WiFi.localIP();
+  snprintf(buffer, 500, "{ \"id\": \"%s\", \"system\": { \"name\": \"%s\", \"freeheap\": %d, \"uptime\": %lu, \"ip\": \"%d.%d.%d.%d\", \"rssi\": %d }, \"environment\": { \"temperature\": %d, \"humidity\": %d, \"pressure\": %d }, \"air\": {  \"tvoc\": %0.2f, \"pm1\": %d, \"pm25\": %d, \"pm10\": %d }, \"light\": {  \"lux\": %d, \"full_light\": %d, \"ir\": %d, \"visible\": %d }, \"presence\": %s }",
 	   MQTT_UUID,
-	   hostname, ESP.getFreeHeap(), uptime.uptime()/1000,
+	   hostname, ESP.getFreeHeap(), uptime.uptime()/1000, local[0], local[1], local[2], local[3], WiFi.RSSI(),
 	   bme680.temperature(), bme680.humidity(), bme680.pressure(),
 	   bme680.gas_resistance(), pms5003.density_1_0(), pms5003.density_2_5(), pms5003.density_10_0(),
 	   tsl2561.lux(), tsl2561.full(), tsl2561.ir(), tsl2561.visible(),
 	   pir.presence() ? "true" : "false");
 
     Serial.println(buffer);
-    mqtt_client.publish("/furball", buffer, true);
+    if(!mqtt_client.publish("/furball", buffer, true))
+      Serial.println("MQTT publish failed! :(");
 
 #ifdef REST_API_ENDPOINT
     void post(char *);
