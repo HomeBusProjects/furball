@@ -226,8 +226,10 @@ void setup() {
   tsl2561.begin();
   Serial.println("[tsl2561]");
 
+#ifndef NO_PMS
   pms5003.begin(Serial1);
   Serial.println("[pms5003]");
+#endif
 
   pir.begin();
   Serial.println("[pir]");
@@ -244,7 +246,7 @@ void setup() {
 
 
 void loop() {
-  static unsigned long last_loop = 0;
+  static unsigned long next_loop = 0;
   static unsigned long last_mqtt_check = 0;
 
   mqtt_client.loop();
@@ -262,11 +264,11 @@ void loop() {
 
   bme680.handle();
   tsl2561.handle();
+#ifndef NO_PMS
   pms5003.handle();
-
-#if 0
-  sound_level.handle();
 #endif
+
+  sound_level.handle();
   pir.handle();
 
   if(bme680.ready_for_update()) {
@@ -286,6 +288,7 @@ void loop() {
 #endif
   }
 
+#ifndef NO_PMS
   if(pms5003.ready_for_update()) {
 #ifdef VERBOSE
     Serial.printf("PMS5003 1.0 %d\n", pms5003.density_1_0());
@@ -293,22 +296,21 @@ void loop() {
     Serial.printf("PMS5003 10.0 %d\n", pms5003.density_10_0());
 #endif
   }
-
-
-#if 0
-  if(sound_level.ready_for_update()) {
-    //    sound_level_feed.publish(sound_level.sound_level());
-    //    Serial.printf("Sound level %d\n", sound_level.sound_level());
-
-    Serial.printf("Sound level %d with %d samples\n", sound_level.sample_value(), sound_level.sample_count());
-    sound_level.start_sampling();
-  }
 #endif
 
-  if(millis() - last_loop < UPDATE_DELAY || !mqtt_client.connected())
+
+  if(sound_level.ready_for_update()) {
+    Serial.printf("Sound average %u\n", sound_level.sound_level());
+    Serial.printf("Sound max %u\n", sound_level.sound_max());
+    Serial.printf("Sound min %u\n", sound_level.sound_min());
+    Serial.printf("Sound samples %u\n", sound_level.sample_count());
+  }
+
+
+  if(next_loop > millis() || !mqtt_client.connected())
     return;
 
-  last_loop = millis();
+  next_loop = millis() + UPDATE_DELAY;
 
 #ifdef VERBOSE
   Serial.printf("Uptime %.2f seconds\n", uptime.uptime() / 1000.0);
@@ -316,14 +318,20 @@ void loop() {
   Serial.printf("Wifi RSSI %d\n", WiFi.RSSI());
 #endif
 
-  char buffer[500];
+  char buffer[700];
   IPAddress local = WiFi.localIP();
-  snprintf(buffer, 500, "{ \"id\": \"%s\", \"system\": { \"name\": \"%s\", \"freeheap\": %d, \"uptime\": %lu, \"ip\": \"%d.%d.%d.%d\", \"rssi\": %d }, \"environment\": { \"temperature\": %d, \"humidity\": %d, \"pressure\": %d }, \"air\": {  \"tvoc\": %0.2f, \"pm1\": %d, \"pm25\": %d, \"pm10\": %d }, \"light\": {  \"lux\": %d, \"full_light\": %d, \"ir\": %d, \"visible\": %d }, \"presence\": %s }",
+  snprintf(buffer, 700, "{ \"id\": \"%s\", \"system\": { \"name\": \"%s\", \"freeheap\": %d, \"uptime\": %lu, \"ip\": \"%d.%d.%d.%d\", \"rssi\": %d }, \"environment\": { \"temperature\": %d, \"humidity\": %d, \"pressure\": %d }, \"air\": {  \"tvoc\": %0.2f, \"pm1\": %d, \"pm25\": %d, \"pm10\": %d }, \"light\": {  \"lux\": %d, \"full_light\": %d, \"ir\": %d, \"visible\": %d }, \"sound\": { \"average\": %d, \"min\": %d, \"max\": %d, \"samples\": %d }, \"presence\": %s }",
 	   MQTT_UUID,
 	   hostname, ESP.getFreeHeap(), uptime.uptime()/1000, local[0], local[1], local[2], local[3], WiFi.RSSI(),
 	   bme680.temperature(), bme680.humidity(), bme680.pressure(),
-	   bme680.gas_resistance(), pms5003.density_1_0(), pms5003.density_2_5(), pms5003.density_10_0(),
+	   bme680.gas_resistance(), 
+#ifdef NO_PMS
+	   0, 0, 0,
+#else
+	   pms5003.density_1_0(), pms5003.density_2_5(), pms5003.density_10_0(),
+#endif
 	   tsl2561.lux(), tsl2561.full(), tsl2561.ir(), tsl2561.visible(),
+	   sound_level.sound_level(), sound_level.sound_min(), sound_level.sound_max(), sound_level.sample_count(),
 	   pir.presence() ? "true" : "false");
 
     Serial.println(buffer);
