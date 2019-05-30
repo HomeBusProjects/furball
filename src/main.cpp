@@ -126,14 +126,29 @@ const char* reboot_reason(int code) {
   
 
 static char hostname[sizeof("furball-%02x%02x%02x") + 1];
+#ifdef BUILD_INFO
+
+#define STRINGIZE_NX(A) #A
+#define STRINGIZE(A) STRINGIZE_NX(A)
+
+static char build_info[] = STRINGIZE(BUILD_INFO);
+#else
+static char build_info[] = "not set";
+#endif
+
+static RTC_DATA_ATTR int bootCount = 0;
+static RTC_DATA_ATTR int wifi_failures = 0;
 
 void setup() {
   byte mac_address[6];
+
+  bootCount++;
 
   delay(500);
 
   Serial.begin(115200);
   Serial.println("Hello World!");
+  Serial.printf("Build %s\n", build_info);
 
   if(!SPIFFS.begin(true)) {
     Serial.println("SPIFFS Mount Failed");
@@ -149,9 +164,15 @@ void setup() {
   wifiMulti.addAP(WIFI_SSID2, WIFI_PASSWORD2);
   wifiMulti.addAP(WIFI_SSID3, WIFI_PASSWORD3);
 
+  static int wifi_tries = 0;
   while(wifiMulti.run() != WL_CONNECTED) {
     Serial.print(".");
     delay(100);
+
+    if(wifi_tries++ > 100) {
+      wifi_failures++;
+      ESP.restart();
+    }
   }
 
   Serial.println(WiFi.localIP());
@@ -320,9 +341,9 @@ void loop() {
 
   char buffer[700];
   IPAddress local = WiFi.localIP();
-  snprintf(buffer, 700, "{ \"id\": \"%s\", \"system\": { \"name\": \"%s\", \"freeheap\": %d, \"uptime\": %lu, \"ip\": \"%d.%d.%d.%d\", \"rssi\": %d }, \"environment\": { \"temperature\": %d, \"humidity\": %d, \"pressure\": %d }, \"air\": {  \"tvoc\": %0.2f, \"pm1\": %d, \"pm25\": %d, \"pm10\": %d }, \"light\": {  \"lux\": %d, \"full_light\": %d, \"ir\": %d, \"visible\": %d }, \"sound\": { \"average\": %d, \"min\": %d, \"max\": %d, \"samples\": %d }, \"presence\": %s }",
+  snprintf(buffer, 700, "{ \"id\": \"%s\", \"system\": { \"name\": \"%s\", \"build\": \"%s\", \"freeheap\": %d, \"uptime\": %lu, \"ip\": \"%d.%d.%d.%d\", \"rssi\": %d, \"reboots\": %d, \"wifi_failures\": %d }, \"environment\": { \"temperature\": %d, \"humidity\": %d, \"pressure\": %d }, \"air\": {  \"tvoc\": %0.2f, \"pm1\": %d, \"pm25\": %d, \"pm10\": %d }, \"light\": {  \"lux\": %d, \"full_light\": %d, \"ir\": %d, \"visible\": %d }, \"sound\": { \"average\": %d, \"min\": %d, \"max\": %d, \"samples\": %d }, \"presence\": %s }",
 	   MQTT_UUID,
-	   hostname, ESP.getFreeHeap(), uptime.uptime()/1000, local[0], local[1], local[2], local[3], WiFi.RSSI(),
+	   hostname, build_info, ESP.getFreeHeap(), uptime.uptime()/1000, local[0], local[1], local[2], local[3], WiFi.RSSI(), bootCount, wifi_failures,
 	   bme680.temperature(), bme680.humidity(), bme680.pressure(),
 	   bme680.gas_resistance(), 
 #ifdef NO_PMS
