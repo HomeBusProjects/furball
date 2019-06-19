@@ -17,7 +17,11 @@ static portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
 
 static void IRAM_ATTR onTimer() {
   portENTER_CRITICAL_ISR(&timerMux);
+
+  // ADC is 12 bits so even squared it fits in 16 bits
   uint16_t sample = analogRead(audio_pin);
+
+  sample *= sample;
 
   audio_sum += sample;
   audio_samples++;
