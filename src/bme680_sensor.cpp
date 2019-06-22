@@ -9,10 +9,10 @@ void BME680_Sensor::begin() {
     return;
   }
 
-  _bme.setTemperatureOversampling(BME680_OS_8X);
-  _bme.setHumidityOversampling(BME680_OS_2X);
-  _bme.setPressureOversampling(BME680_OS_4X);
-  _bme.setIIRFilterSize(BME680_FILTER_SIZE_3);
+  _bme.setTemperatureOversampling(BME680_OS_2X);
+  _bme.setHumidityOversampling(BME680_OS_1X);
+  _bme.setPressureOversampling(BME680_OS_16X);
+  _bme.setIIRFilterSize(BME680_FILTER_SIZE_15);
   _bme.setGasHeater(320, 150);
 ;}
 

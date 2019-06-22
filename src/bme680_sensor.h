@@ -12,17 +12,17 @@ class BME680_Sensor : public Sensor {
   void begin();
   void handle();
 
-  uint16_t temperature() { _mark_read(); return _temperature; };
-  uint16_t humidity() { _mark_read(); return _humidity; };
-  uint16_t pressure() { _mark_read(); return _pressure; };
-  uint16_t altitude() { _mark_read(); return _altitude; };
+  float temperature() { _mark_read(); return _temperature; };
+  float humidity() { _mark_read(); return _humidity; };
+  float pressure() { _mark_read(); return _pressure; };
+  float altitude() { _mark_read(); return _altitude; };
   float gas_resistance() { _mark_read(); return _gas_resistance; };
 
  private:
   Adafruit_BME680 _bme;
-  uint16_t _temperature;
-  uint16_t _humidity;
-  uint16_t _pressure;
-  uint16_t _altitude;
+  float _temperature;
+  float _humidity;
+  float _pressure;
+  float _altitude;
   float _gas_resistance;
 };

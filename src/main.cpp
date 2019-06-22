@@ -294,9 +294,9 @@ void loop() {
 
   if(bme680.ready_for_update()) {
 #ifdef VERBOSE
-    Serial.printf("Temperature %d\n", bme680.temperature());
-    Serial.printf("Pressure %d\n", bme680.pressure());
-    Serial.printf("Humidity %d\n", bme680.humidity());
+    Serial.printf("Temperature %0.1f\n", bme680.temperature());
+    Serial.printf("Pressure %0.1f\n", bme680.pressure());
+    Serial.printf("Humidity %0.1f\n", bme680.humidity());
 #endif
   }
 
@@ -341,7 +341,7 @@ void loop() {
 
   char buffer[700];
   IPAddress local = WiFi.localIP();
-  snprintf(buffer, 700, "{ \"id\": \"%s\", \"system\": { \"name\": \"%s\", \"build\": \"%s\", \"freeheap\": %d, \"uptime\": %lu, \"ip\": \"%d.%d.%d.%d\", \"rssi\": %d, \"reboots\": %d, \"wifi_failures\": %d }, \"environment\": { \"temperature\": %d, \"humidity\": %d, \"pressure\": %d }, \"air\": {  \"tvoc\": %0.2f, \"pm1\": %d, \"pm25\": %d, \"pm10\": %d }, \"light\": {  \"lux\": %d, \"full_light\": %d, \"ir\": %d, \"visible\": %d }, \"sound\": { \"average\": %d, \"min\": %d, \"max\": %d, \"samples\": %d, \"squared\": true }, \"presence\": %s }",
+  snprintf(buffer, 700, "{ \"id\": \"%s\", \"system\": { \"name\": \"%s\", \"build\": \"%s\", \"freeheap\": %d, \"uptime\": %lu, \"ip\": \"%d.%d.%d.%d\", \"rssi\": %d, \"reboots\": %d, \"wifi_failures\": %d }, \"environment\": { \"temperature\": %.1f, \"humidity\": %.1f, \"pressure\": %.1f }, \"air\": {  \"tvoc\": %0.2f, \"pm1\": %d, \"pm25\": %d, \"pm10\": %d }, \"light\": {  \"lux\": %d, \"full_light\": %d, \"ir\": %d, \"visible\": %d }, \"sound\": { \"average\": %d, \"min\": %d, \"max\": %d, \"samples\": %d, \"squared\": true }, \"presence\": %s }",
 	   MQTT_UUID,
 	   hostname, build_info, ESP.getFreeHeap(), uptime.uptime()/1000, local[0], local[1], local[2], local[3], WiFi.RSSI(), bootCount, wifi_failures,
 	   bme680.temperature(), bme680.humidity(), bme680.pressure(),
