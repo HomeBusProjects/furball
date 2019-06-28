@@ -339,6 +339,19 @@ void loop() {
   Serial.printf("Wifi RSSI %d\n", WiFi.RSSI());
 #endif
 
+  uint16_t pm1 = pms5003.density_1_0();
+  uint16_t pm25 = pms5003.density_2_5();
+  uint16_t pm10 = pms5003.density_10_0();
+
+  if(pm1 > 10000 && uptime.uptime() < 60*1000)
+    pm1 = 0;
+
+  if(pm25 > 10000 && uptime.uptime() < 60*1000)
+    pm25 = 0;
+
+  if(pm10 > 10000 && uptime.uptime() < 60*1000)
+    pm10 = 0;
+
   char buffer[700];
   IPAddress local = WiFi.localIP();
   snprintf(buffer, 700, "{ \"id\": \"%s\", \"system\": { \"name\": \"%s\", \"build\": \"%s\", \"freeheap\": %d, \"uptime\": %lu, \"ip\": \"%d.%d.%d.%d\", \"rssi\": %d, \"reboots\": %d, \"wifi_failures\": %d }, \"environment\": { \"temperature\": %.1f, \"humidity\": %.1f, \"pressure\": %.1f }, \"air\": {  \"tvoc\": %0.2f, \"pm1\": %d, \"pm25\": %d, \"pm10\": %d }, \"light\": {  \"lux\": %d, \"full_light\": %d, \"ir\": %d, \"visible\": %d }, \"sound\": { \"average\": %d, \"min\": %d, \"max\": %d, \"samples\": %d, \"squared\": true }, \"presence\": %s }",
@@ -349,7 +362,7 @@ void loop() {
 #ifdef NO_PMS
 	   0, 0, 0,
 #else
-	   pms5003.density_1_0(), pms5003.density_2_5(), pms5003.density_10_0(),
+	   pm1, pm25, pm10,
 #endif
 	   tsl2561.lux(), tsl2561.full(), tsl2561.ir(), tsl2561.visible(),
 	   sound_level.sound_level(), sound_level.sound_min(), sound_level.sound_max(), sound_level.sample_count(),
