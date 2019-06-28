@@ -7,19 +7,19 @@
 #define WIFI_SSID3     "YOUR WIFI SSID3"
 #define WIFI_PASSWORD3 "YOUR WIFI PASSWORD3"
 
-#define AIO_SERVER      "io.adafruit.com"
-#define AIO_SERVERPORT  1883
-#define AIO_USERNAME    "YOUR ADAFRUITIO NAME"
-#define AIO_KEY         "YOUR ADAFRUITIO KEY"
+#define MQTT_HOST "MQTT_BROKER_NAME_OR_IP"
+#define MQTT_PORT 1883
+
+#define MQTT_USER "MQTT_BROKER_USERNAME"
+#define MQTT_PASS "MQTT_BROKER_PASSWORD"
+#define MQTT_UUID "UUID_FOR_THIS_CLIENT"
 
 // publish updates this many milliseconds
 #define UPDATE_DELAY 60*1000
-
-// just do not define this to skip REST updates
-#define REST_API_ENDPOINT "https://yourserver/path"
 
 // IFTTT
 #define IFTTT_API_KEY    "YOUR IFTTT API KEY
 #define IFTTT_EVENT_NAME "furball"
 
-#define WIFI_PROVISION_UUID "fa81d218-e926-41af-9894-7e0ef604852a"
+// define this if you want serial debugging messages
+#define VERBOSE
