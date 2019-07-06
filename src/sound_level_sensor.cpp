@@ -8,8 +8,8 @@
 
 static uint8_t audio_pin;
 
-static volatile uint16_t audio_min     = 0xffff;
-static volatile uint16_t audio_max     = 0;
+static volatile uint32_t audio_min     = 0xffff;
+static volatile uint32_t audio_max     = 0;
 static volatile uint32_t audio_sum = 0;
 static volatile uint32_t audio_samples = 0;
 
@@ -19,7 +19,7 @@ static void IRAM_ATTR onTimer() {
   portENTER_CRITICAL_ISR(&timerMux);
 
   // ADC is 12 bits so even squared it fits in 16 bits
-  uint16_t sample = analogRead(audio_pin);
+  uint32_t sample = analogRead(audio_pin);
 
   sample *= sample;
 

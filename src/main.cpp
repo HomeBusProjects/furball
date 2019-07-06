@@ -46,6 +46,7 @@ Button the_button(BUTTON_PIN);
 
 WiFiMulti wifiMulti;
 
+
 // HomeBus is not ready for Prime Time so leave this out for now
 #ifdef HOMEBUS
 
@@ -124,7 +125,10 @@ const char* reboot_reason(int code) {
   }
 }
   
-
+// allocate enough space for the prefix and the UUID
+#define MAX_UUID_LENGTH 37
+#define HOMEBUS_ENDPOINT_LENGTH sizeof("/homebus/device/") + MAX_UUID_LENGTH
+static char homebus_endpoint[HOMEBUS_ENDPOINT_LENGTH + 1];
 static char hostname[sizeof("furball-%02x%02x%02x") + 1];
 #ifdef BUILD_INFO
 
@@ -156,7 +160,10 @@ void setup() {
 
   WiFi.macAddress(mac_address);
   snprintf(hostname, sizeof(hostname), "furball-%02x%02x%02x", (int)mac_address[3], (int)mac_address[4], (int)mac_address[5]);
-  Serial.printf("Hostname is %s\n", hostname);
+  Serial.printf("Hostname: %s\n", hostname);
+
+  snprintf(homebus_endpoint, HOMEBUS_ENDPOINT_LENGTH, "/homebus/device/%s", MQTT_UUID);
+  Serial.printf("Homebus endpoint: %s\n", homebus_endpoint);
 
   WiFi.setHostname(hostname);
 
@@ -370,7 +377,11 @@ void loop() {
 
     Serial.println(buffer);
     if(!mqtt_client.publish("/furball", buffer, true))
-      Serial.println("MQTT publish failed! :(");
+      Serial.println("MQTT publish /furball failed! :(");
+
+    if(!mqtt_client.publish(homebus_endpoint, buffer, true))
+      Serial.println("MQTT publish /furball failed! :(");
+
 
 #ifdef REST_API_ENDPOINT
     void post(char *);
