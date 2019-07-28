@@ -16,7 +16,7 @@
 
 #include <PubSubClient.h>
 static WiFiClient wifi_mqtt_client;
-static PubSubClient mqtt_client(wifi_mqtt_client);
+PubSubClient mqtt_client(wifi_mqtt_client);
 
 #include "bme680_sensor.h"
 #include "tsl2561_sensor.h"
