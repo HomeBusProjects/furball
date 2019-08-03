@@ -18,12 +18,12 @@
 static WiFiClient wifi_mqtt_client;
 PubSubClient mqtt_client(wifi_mqtt_client);
 
-#include "bme680_sensor.h"
-#include "tsl2561_sensor.h"
-#include "pms_sensor.h"
+#include "sensors/bme680_sensor.h"
+#include "sensors/tsl2561_sensor.h"
+#include "sensors/pms_sensor.h"
 
-#include "pir_sensor.h"
-#include "sound_level_sensor.h"
+#include "sensors/pir_sensor.h"
+#include "sensors/sound_level_sensor.h"
 
 BME680_Sensor bme680(UPDATE_DELAY, 0, 0, false);
 TSL2561_Sensor tsl2561(UPDATE_DELAY, 0, 0, false);
@@ -32,75 +32,15 @@ PMS_Sensor pms5003(UPDATE_DELAY, 0, 0, false);
 PIR_Sensor pir(1, UPDATE_DELAY, 0, 0, false);
 SoundLevel_Sensor sound_level(SOUND_PIN, UPDATE_DELAY, 0, 0, false);
 
-#include "led.h"
+#include "indicator.h"
 
-LED led(LED_RED, LED_GREEN, LED_BLUE);
 
-#include "uptime.h"
+#include "sensors/uptime.h"
 
 Uptime uptime;
 
-#include <JC_Button.h>   
-
-Button the_button(BUTTON_PIN);
 
 WiFiMulti wifiMulti;
-
-
-// HomeBus is not ready for Prime Time so leave this out for now
-#ifdef HOMEBUS
-
-#include <HomeBus.h>
-#include <HomeBusDevice.h>
-
-HomeBus hb("Furball One",
-	   "an esp8266 far, far away",
-	   "HomeBus Central",
-	   "0.0.1",
-	   WiFi.mac_address,
-	   "0-0-0-0");
-
-HomeBusDevice hb_tsl2561_lux(&hb,
-			     "Light sensor",
-			     "HomeBus One",
-			     100,
-			     100,
-			     1000,
-			     true,
-			     "lux",
-			     "",
-			     ""
-			     );
-
-HomeBusDevice hb_tsl2561_ir(&hb,
-			    "Infrared sensor",
-			    "HomeBus One",
-			    100,
-			    100,
-			    1000,
-			    true,
-			    "ir",
-			    "",
-			    ""
-			    );
-
-
-HomeBusDevice hb_ccs811_voc(&hb,
-			    "VOC",
-			    "HomeBus One",
-			    100,
-			    100,
-			    1000,
-			    true,
-			    "voc",
-			    "",
-			    ""
-			    );
-
-#endif
-
-#include <IFTTTWebhook.h>
-IFTTTWebhook ifttt(IFTTT_API_KEY, IFTTT_EVENT_NAME);
 
 #include <rom/rtc.h>
 
@@ -185,8 +125,6 @@ void setup() {
   Serial.println(WiFi.localIP());
   Serial.println("[wifi]");
 
-  ifttt.trigger("reboot", reboot_reason(rtc_get_reset_reason(0)),  reboot_reason(rtc_get_reset_reason(1)));
-
   if(!MDNS.begin(hostname))
     Serial.println("Error setting up MDNS responder!");
   else
@@ -265,9 +203,8 @@ void setup() {
   sound_level.begin();
   Serial.println("[sound pressure]");
 
-  led.begin();
-  led.off();
-  Serial.println("[led]");
+  indicator_begin();
+  Serial.println("[indicator]");
 
   delay(500);
 }
@@ -278,6 +215,8 @@ void loop() {
   static unsigned long last_mqtt_check = 0;
 
   mqtt_client.loop();
+
+  indicator_loop();
 
   if(millis() > last_mqtt_check + 5000) {
     if(!mqtt_client.connected()) {
