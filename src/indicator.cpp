@@ -1,9 +1,10 @@
 #include "indicator.h"
 #include "hw.h"
 
+#include <multiball/mqtt.h>
+
 #include <WiFi.h>
 #include <Ticker.h>
-#include <PubSubClient.h>
 
 #define INDICATOR_INTERVAL 0.5
 
@@ -11,8 +12,6 @@
 // #include <FastLED.h>
 
 static Ticker indicator_ticker;
-
-extern PubSubClient mqtt_client;
 
 static bool indicator_flash = true;
 static bool indicator_on = true;
@@ -24,7 +23,7 @@ void indicator_set_color(uint8_t red, uint8_t green, uint8_t blue) {
 }
 
 void indicator_loop() {
-  if(WiFi.status() == WL_CONNECTED && mqtt_client.connected()) {
+  if(WiFi.status() == WL_CONNECTED && mqtt_is_connected()) {
     indicator_set_color(0x00, 0xff, 0x00);
     indicator_flash = false;
     return;
