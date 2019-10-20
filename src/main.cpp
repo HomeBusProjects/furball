@@ -3,6 +3,7 @@
 #include "config.h"
 #include "hw.h"
 
+#include <multiball/app.h>
 #include <multiball/wifi.h>
 #include <multiball/ota_updates.h>
 #include <multiball/mqtt.h>
@@ -38,63 +39,19 @@ SoundLevel_Sensor sound_level(SOUND_PIN, UPDATE_DELAY, 0, 0, false);
 static char homebus_endpoint[HOMEBUS_ENDPOINT_LENGTH + 1];
 
 
-#ifdef BUILD_INFO
-
-#define STRINGIZE_NX(A) #A
-#define STRINGIZE(A) STRINGIZE_NX(A)
-
-static char build_info[] = STRINGIZE(BUILD_INFO);
-#else
-static char build_info[] = "not set";
-#endif
-
-static RTC_DATA_ATTR int bootCount = 0;
-static RTC_DATA_ATTR int wifi_failures = 0;
+MultiballApp App;
 
 void setup() {
-  const char* hostname;
-  const char *wifi_credentials[] = {
-  WIFI_SSID1, WIFI_PASSWORD1,
-  WIFI_SSID2, WIFI_PASSWORD2,
-  WIFI_SSID3, WIFI_PASSWORD3
+  const wifi_credential_t wifi_credentials[] = {
+    { WIFI_SSID1, WIFI_PASSWORD1 },
+    { WIFI_SSID2, WIFI_PASSWORD2 },
+    { WIFI_SSID3, WIFI_PASSWORD3 }
   };
-
-  byte mac_address[6];
-
-  bootCount++;
 
   delay(500);
 
-  Serial.begin(115200);
-  Serial.println("Hello World!");
-  Serial.printf("Build %s\n", build_info);
-
-  if(!SPIFFS.begin(true)) {
-    Serial.println("SPIFFS Mount Failed");
-    }
-
-  if(wifi_begin(wifi_credentials, 3, "furball")) {
-    Serial.println(WiFi.localIP());
-    Serial.println("[wifi]");
-
-    hostname = wifi_hostname();
-
-    if(!MDNS.begin(hostname))
-      Serial.println("Error setting up MDNS responder!");
-    else
-      Serial.println("[mDNS]");
-
-  } else {
-    Serial.println("wifi failure");
-  }
-
-  ota_updates_setup();
-  Serial.println("[ota_updates]");
-
-  if(!MDNS.begin(hostname))
-    Serial.println("Error setting up MDNS responder!");
-  else
-    Serial.println("[mDNS]");
+  App.wifi_credentials(3, wifi_credentials);
+  App.begin();
 
   mqtt_setup(MQTT_HOST, MQTT_PORT, MQTT_UUID, MQTT_USER, MQTT_PASS);
   Serial.println("[mqtt]");
@@ -210,7 +167,7 @@ void loop() {
   IPAddress local = WiFi.localIP();
   snprintf(buffer, 700, "{ \"id\": \"%s\", \"system\": { \"name\": \"%s\", \"build\": \"%s\", \"freeheap\": %d, \"uptime\": %lu, \"ip\": \"%d.%d.%d.%d\", \"rssi\": %d, \"reboots\": %d, \"wifi_failures\": %d }, \"environment\": { \"temperature_adjusted\": true, \"temperature\": %.1f, \"humidity\": %.1f, \"pressure\": %.1f }, \"air\": {  \"tvoc\": %0.2f, \"pm1\": %d, \"pm25\": %d, \"pm10\": %d }, \"light\": {  \"lux\": %d, \"full_light\": %d, \"ir\": %d, \"visible\": %d }, \"sound\": { \"average\": %d, \"min\": %d, \"max\": %d, \"samples\": %d, \"squared\": true }, \"presence\": %s }",
 	   MQTT_UUID,
-	   wifi_hostname(), build_info, ESP.getFreeHeap(), uptime.uptime()/1000, local[0], local[1], local[2], local[3], WiFi.RSSI(), bootCount, wifi_failures,
+	   wifi_hostname(), App.build_info(), ESP.getFreeHeap(), uptime.uptime()/1000, local[0], local[1], local[2], local[3], WiFi.RSSI(), App.boot_count(), App.wifi_failures(),
 #ifdef TEMPERATURE_ADJUSTMENT
 	   bme680.temperature() + TEMPERATURE_ADJUSTMENT,
 #else
@@ -232,4 +189,7 @@ void loop() {
     Serial.println(buffer);
 #endif
     mqtt_publish(homebus_endpoint, buffer, true);
+}
+
+void homebus_mqtt_callback(char const*, char*) {
 }

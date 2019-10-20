@@ -2,7 +2,7 @@
 
 class LED {
 public:
-  LED(uint8_t red_pin, uint8_t green_pin, uint8_t blue_pin) : _red_pin(red_pin), _blue_pin(blue_pin), _green_pin(green_pin) {};
+  LED(uint8_t red_pin, uint8_t green_pin, uint8_t blue_pin) : _red_pin(red_pin), _green_pin(green_pin), _blue_pin(blue_pin) {};
 
   void begin();
   void set(uint8_t red, uint8_t green, uint8_t blue);
