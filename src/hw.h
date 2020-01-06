@@ -9,3 +9,7 @@
 
 #define PMS_RX_PIN  15
 #define PMS_TX_PIN  16
+
+#include <HTTPClient.h>
+#include <WiFiClient.h>
+#include <WiFiClientSecure.h>
