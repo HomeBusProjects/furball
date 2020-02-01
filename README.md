@@ -1,55 +1,51 @@
 # The Furball
 
-Furball is an open-source hardware project intended to help with the research and development of HomeBus, an IoT auto-provisioning framework.
+Furball is an open-source hardware project intended to help with the research and development of [Homebus](https://github.com/HomeBusProjects), an IoT auto-provisioning framework and data processing network built on top of MQTT. Note that Homebus is not even alpha quality software at this time and is still undergoing architectural changes and development.
 
 The name 'Furball' is an homage to Dave Mills' ["Fuzzball"](https://en.wikipedia.org/wiki/Fuzzball_router), one of the first routers on the nascent Internet.
 
-The Furball hardware performs environmental monitoring and is intended to be deployed indoors with fixed power source. It will auto-provision with HomeBus to feed sensor readings into an IoT system.
+The Furball hardware performs environmental monitoring and is intended to be deployed indoors with fixed power source. It will auto-provision with Homebus to feed sensor readings into an IoT system.
 
 ## Hardware
 
-Furball is based on the ESP32 processor. ESP32 is more capable than its predecessor, the ESP8266 while remaining inexpensive. The ESP32 supports both 802.11b/g/n Wifi and Bluetooth 4.2/BLE. It also has hardware acceleration for encryption. It includes 4 SPI controllers, 2 I2C controllers, 3 UARTs, up to 18 channels of ADC and two 8 bit DACs. 
+Furball is based on the ESP32 processor. ESP32 is more capable than its predecessor, the ESP8266 while remaining inexpensive. The ESP32 supports both 802.11b/g/n Wifi and Bluetooth 4.2/BLE. It also has hardware acceleration for encryption. It includes 4 SPI controllers, 2 I2C controllers, 3 UARTs, up to 18 channels of ADC and two 8 bit DACs. You'll never use all of those at once as it doesn't have enough GPIO pins to express all of those functions, though you can map many of the hardware controllers to particular GPIO pins.
 
-The hardware should support several common environmental sensors in order of importance:
+The hardware supports several environmental sensors:
 - temperature
 - humidity
-- occupancy 
 - air pressure 
-- light
-- sound pressure
+- light intensity
+- occupancy 
+- sound intensity
 - volatile organics
 
-It should express one of its I2C ports to an external optional connector along with power (5V/3.3V/GND).
+It's powered via USB. The hardware currently uses a LOLIN32 board which has a JST connector for a LiPo battery. The software is currently in no way optimized for battery operation.
 
-It shoud be powered via USB.
+The hardware also includes either a tri-color LED or RGB LED with controller.
 
-Its USB port should be accessible externally for programming in addition to power.
-
-It should include a tri-color LED for debugging and identification purposes.
+While the Furball hardware is designed to work with the Furball software, it should also work with other software like [ESPEasy32](https://www.letscontrolit.com/wiki/index.php?title=ESPEasy32), [ESPHome](https://esphome.io/) or custom software.
 
 ### Temperature, Humidity and Pressure
 
-Consider BME280 - temperature/pressure/humidity. $2.57 in single unit quantities, AliExpress.
+Furball currently uses the [BME280](https://www.bosch-sensortec.com/products/environmental-sensors/humidity-sensors-bme280/) - temperature/pressure/humidity sensor, $2.57 in single unit quantities, AliExpress, or the [BME680](https://www.bosch-sensortec.com/products/environmental-sensors/gas-sensors-bme680/) - temperature/pressure/humidity/VOC sensor, $9.92 in single unit quanitties on AliExpress.
 
 ### Occupancy
 
-Consider a PIR sensor connected to a digital input.
+Furball hardware has a 3 pin header for a [PIR](https://en.wikipedia.org/wiki/Passive_infrared_sensor) sensor.
 
 ### Sound Pressure
 
-Consider an analog circuit.
-
-Research microphones to find a decent but cheap one. Saw reference to POM-3535L-3-LW100-R.
+Furball hardware currently uses a small amplified microphone on a breakout board, compatible with [Sparkfun's Sound Detector](https://www.sparkfun.com/products/12642).
 
 ### Light
 
-Furball uses the SL2561  Digital Luminosity sensor - $1 in single unit quantities, AliExpress.
+Furball uses the [TSL2561](https://ams.com/tsl2561)  Digital Luminosity sensor - $1 in single unit quantities, AliExpress.
 
 ### VOC
 
 Furball uses the BME680, which is a BME280 plus a VOC sensor. If you're building a Furball which can read VOCs, you only need the BME680 and not the BME280.
 
-(note: I originally used a CCS811 but had a lot of problems with cheaper units. It also doesn't truly measure CO2 but infers it from the VOC reading.)
+(note: I originally used a [CCS811](https://ams.com/ccs811) but had a lot of problems with cheaper units. It also doesn't truly measure CO2 but infers it from the VOC reading.)
 
 ### Total Cost
 
@@ -64,16 +60,22 @@ Total of roughly $20 in parts before the circuit board.
 
 ## Optional Hardware
 
-### Atmospheric
+### Particle sensor
 
-Furball should have an optional expansion card that reports on atmospheric gasses and particles. This board would include an I2C ADC converter, up to four MQ series gas sensors, and a PMS5003 particle sensor. Software will need to consider that MQ series sensors need both burn-in and run-in periods, and that if run full-time a PMS5003 sensor will degrade after about a year of use, so it needs to sleep as much as possible.
+Furball has an optional port to connect a Plantower [PMS5003](http://www.plantower.com/en/content/?108.html) particle sensor. The particle sensor allows you to monitor air quality.
 
 ## Software
 
-Furball's software is built on the Arduino Core.
+Furball's software is built on the Arduino Core using [PlatformIO](https://platformio.org/) as its build system. I prefer PlatformIO because it's fast, has a good library manager, lets you build for arbitrary platforms without having to manually install support for them, and lets you use your editor of choice.
 
-Software should allow an update to be pushed locally over wifi or pulled automatically.
+Once you've installed PlatformIO you can build the Furball firmware by running:
+```
+platformio run
+```
 
+in its top level directory.
+
+It currently supports OTA updates.
 
 ## Iterations
 
@@ -81,9 +83,9 @@ The intial version is a simple breadboard.
 
 Second version is a soldered printed circuit breadboard.
 
-The third version will be a custom printed circuit board with modules soldered into it.
+The third and current version will be a custom printed circuit board with modules soldered into it.
 
-The fourth will be a custom printed circuit board with surface mount components and will have components mounted directly on it rather than using 3rd party modules.
+A hypothetical fourth version would be a custom printed circuit board with surface mount components and will have components mounted directly on it rather than using 3rd party modules.
 
 
 # License
