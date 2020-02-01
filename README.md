@@ -8,6 +8,8 @@ The Furball hardware performs environmental monitoring and is intended to be dep
 
 ## Hardware
 
+![An assembled Furball](docs/img/furballv3.jpg)
+
 Furball is based on the ESP32 processor. ESP32 is more capable than its predecessor, the ESP8266 while remaining inexpensive. The ESP32 supports both 802.11b/g/n Wifi and Bluetooth 4.2/BLE. It also has hardware acceleration for encryption. It includes 4 SPI controllers, 2 I2C controllers, 3 UARTs, up to 18 channels of ADC and two 8 bit DACs. You'll never use all of those at once as it doesn't have enough GPIO pins to express all of those functions, though you can map many of the hardware controllers to particular GPIO pins.
 
 The hardware supports several environmental sensors:
@@ -24,6 +26,8 @@ It's powered via USB. The hardware currently uses a LOLIN32 board which has a JS
 The hardware also includes either a tri-color LED or RGB LED with controller.
 
 While the Furball hardware is designed to work with the Furball software, it should also work with other software like [ESPEasy32](https://www.letscontrolit.com/wiki/index.php?title=ESPEasy32), [ESPHome](https://esphome.io/) or custom software.
+
+See the [Furball Hardware Guide](HARDWARE.md) for assembly instructions.
 
 ### Temperature, Humidity and Pressure
 
