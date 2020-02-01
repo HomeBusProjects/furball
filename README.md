@@ -72,12 +72,19 @@ Furball has an optional port to connect a Plantower [PMS5003](http://www.plantow
 
 Furball's software is built on the Arduino Core using [PlatformIO](https://platformio.org/) as its build system. I prefer PlatformIO because it's fast, has a good library manager, lets you build for arbitrary platforms without having to manually install support for them, and lets you use your editor of choice.
 
+Create a `src/config.h` file based on `src/config.h-example` and configure Wifi and the MQTT broker.
+
 Once you've installed PlatformIO you can build the Furball firmware by running:
 ```
 platformio run
 ```
 
 in its top level directory.
+
+To flash the firmware, run:
+```
+platformio run -t upload
+```
 
 It currently supports OTA updates.
 
