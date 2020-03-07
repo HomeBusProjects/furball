@@ -2,27 +2,14 @@
 #include "pms_sensor.h"
 
 void PMS_Sensor::begin(HardwareSerial port) {
-  //  Serial1.begin(9600, (uint32_t)SERIAL_8N1, 25, 26);
-
-  //  _pms = new PMS(Serial1);
+  port.begin(9600, (uint32_t)SERIAL_8N1, 25, 26);
 
   // 16 - ESP32 xmt
   // 17 - ESP32 rcv
-
-#ifdef ORIGINAL_PMS_LIBRARY
-  port.begin(9600, (uint32_t)SERIAL_8N1, 17, 16);
-  _pms = new PMS(port);
-
-  _pms->passiveMode();
-  _pms->wakeUp();
-#endif
-
-#ifdef NEW_PMS_LIBRARY
   _pms = new Pmsx003(17, 16);
   _pms->begin();
   _pms->waitForData(Pmsx003::wakeupTime);
   _pms->write(Pmsx003::cmdModeActive);
-#endif
 }
 
 void PMS_Sensor::begin() {
@@ -35,20 +22,7 @@ static auto lastRead = millis();
 void PMS_Sensor::handle() {
   if(millis() - _last_read_request < PMS_READ_DELAY)
     return;
-  
-#ifdef ORIGINAL_PMS_LIBRARY
-  PMS::DATA data;
-  
-  if(_last_read_request > 0 && _pms->readUntil(data)) {
-    _density_1_0 = data.PM_AE_UG_1_0;
-    _density_2_5 = data.PM_AE_UG_2_5;
-    _density_10_0 = data.PM_AE_UG_10_0;
-  }
 
-    _pms->requestRead();
-#endif
-
-#ifdef NEW_PMS_LIBRARY
     const auto n = Pmsx003::Reserved;
     Pmsx003::pmsData data[n];
 
@@ -88,7 +62,6 @@ void PMS_Sensor::handle() {
       Serial.println("_________________");
       Serial.println(Pmsx003::errorMsg[status]);
     };
-#endif
 
     _last_read_request = millis();
 }

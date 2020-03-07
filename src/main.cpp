@@ -8,6 +8,10 @@
 #include <multiball/ota_updates.h>
 #include <multiball/homebus.h>
 
+#ifdef USE_DIAGNOSTICS
+#include <multiball/diagnostics.h>
+#endif
+
 #include <ESPmDNS.h>
 
 #include <FS.h>
@@ -29,17 +33,31 @@ void setup() {
   delay(500);
 
   App.wifi_credentials(3, wifi_credentials);
-  App.begin();
+  App.begin("furball");
   Serial.println("[app]");
 
+#ifdef MQTT_HOST
+  Serial.println("[credentials]");
+  homebus_stuff(MQTT_HOST, MQTT_PORT, MQTT_USER, MQTT_PASS, MQTT_UUID);
+#endif
+
+  Serial.println("[homebus]");
   homebus_configure("Furball", "CTRLH Electronics Lab", "Homebus", "v4");
   homebus_setup();
+
+  Serial.println("[homebus mqtt]");
+  homebus_mqtt_setup();
 
   indicator_begin();
   Serial.println("[indicator]");
 
   furball_setup();
   Serial.println("[furball]");
+
+#ifdef USE_DIAGNOSTICS
+  diagnostics_setup();
+  Serial.println("[diagnostics]");
+#endif
 
   delay(500);
 }
@@ -50,4 +68,8 @@ void loop() {
   indicator_loop();
 
   furball_loop();
+
+#ifdef USE_DIAGNOSTICS
+  diagnostics_loop(furball_stream);
+#endif
 }
