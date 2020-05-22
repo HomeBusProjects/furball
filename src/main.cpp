@@ -14,6 +14,7 @@
 #include <SPIFFS.h>
 
 #include "furball.h"
+#include "diagnostics.h"
 
 #include "indicator.h"
 
@@ -41,6 +42,9 @@ void setup() {
   furball_setup();
   Serial.println("[furball]");
 
+  diagnostics_setup();
+  Serial.println("[diagnostics]");
+
   delay(500);
 }
 
@@ -50,4 +54,6 @@ void loop() {
   indicator_loop();
 
   furball_loop();
+
+  diagnostics_loop(furball_stream);
 }

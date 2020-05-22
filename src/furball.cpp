@@ -1,4 +1,5 @@
 #include "furball.h"
+#include "diagnostics.h"
 
 #include <Arduino.h>
 
@@ -144,4 +145,44 @@ void furball_loop() {
     Serial.println(buffer);
 #endif
     homebus_publish(buffer);
+}
+
+void furball_stream() {
+  static uint8_t count = 0;
+
+  if(count == 0)
+    Serial.println("TEMP PRES HUMD TVOC   IR VISB FULL  LUX  1.0  2.5 10.0  SMAX  SMIN  SAVG  SCNT  PIR");
+
+  if(++count == 10)
+    count = 0;
+
+  bme680.handle();
+  tsl2561.handle();
+  pms5003.handle();
+  sound_level.handle();
+
+  Serial.printf( "%03.1f %4.0f %4.0f %4.0f %4d %4d %4d %4d %4d %4d %4d %5d %5d %5d %5d    %c\n",
+		 bme680.temperature(),
+		 bme680.pressure(),
+		 bme680.humidity(),
+		 bme680.gas_resistance(),
+		 tsl2561.ir(),
+		 tsl2561.visible(),
+		 tsl2561.full(),
+		 tsl2561.lux(),
+		 pms5003.density_1_0(),
+		 pms5003.density_2_5(),
+		 pms5003.density_10_0(),
+		 sound_level.sound_max(),
+		 sound_level.sound_min(),
+		 sound_level.sound_level(),
+		 sound_level.sample_count(),
+		 pir.presence() ? '1' : '0');
+
+  if(0) {
+  Serial.println("[system]");
+  Serial.printf("  Uptime %.2f seconds\n", uptime.uptime() / 1000.0);
+  Serial.printf("  Free heap %u bytes\n", ESP.getFreeHeap());
+  Serial.printf("  Wifi RSSI %d\n", WiFi.RSSI());
+  }
 }
