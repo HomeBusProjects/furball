@@ -18,6 +18,7 @@
 #include <SPIFFS.h>
 
 #include "furball.h"
+#include "diagnostics.h"
 
 #include "indicator.h"
 

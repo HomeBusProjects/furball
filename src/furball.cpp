@@ -1,4 +1,5 @@
 #include "furball.h"
+#include "diagnostics.h"
 
 #include <Arduino.h>
 
