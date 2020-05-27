@@ -1,5 +1,7 @@
 # The Furball
 
+[![Build Status](https://travis-ci.com/HomeBusProjects/furball.svg?branch=master)](https://travis-ci.com/HomeBusProjects/furball)
+
 Furball is an open-source hardware project intended to help with the research and development of [Homebus](https://github.com/HomeBusProjects), an IoT auto-provisioning framework and data processing network built on top of MQTT. Note that Homebus is not even alpha quality software at this time and is still undergoing architectural changes and development.
 
 The name 'Furball' is an homage to Dave Mills' ["Fuzzball"](https://en.wikipedia.org/wiki/Fuzzball_router), one of the first routers on the nascent Internet.
