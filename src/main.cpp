@@ -46,9 +46,6 @@ void setup() {
   homebus_configure("Furball", "CTRLH Electronics Lab", "Homebus", "v4");
   homebus_setup();
 
-  Serial.println("[homebus mqtt]");
-  homebus_mqtt_setup();
-
   indicator_begin();
   Serial.println("[indicator]");
 
