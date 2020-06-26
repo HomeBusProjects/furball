@@ -20,8 +20,6 @@
 #include "furball.h"
 #include "diagnostics.h"
 
-#include "indicator.h"
-
 MultiballApp App;
 
 void setup() {
@@ -46,9 +44,6 @@ void setup() {
   homebus_configure("Furball", "CTRLH Electronics Lab", "Homebus", "v4");
   homebus_setup();
 
-  indicator_begin();
-  Serial.println("[indicator]");
-
   furball_setup();
   Serial.println("[furball]");
 
@@ -62,8 +57,6 @@ void setup() {
 
 void loop() {
   App.handle();
-
-  indicator_loop();
 
   furball_loop();
 
