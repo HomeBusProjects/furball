@@ -10,6 +10,9 @@ void PMS_Sensor::begin(HardwareSerial port) {
   _pms->begin();
   _pms->waitForData(Pmsx003::wakeupTime);
   _pms->write(Pmsx003::cmdModeActive);
+
+  // should really perform some kind of test for presence
+  _present = true;
 }
 
 void PMS_Sensor::begin() {

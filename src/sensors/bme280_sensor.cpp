@@ -20,6 +20,8 @@ void BME280_Sensor::begin() {
     return;
   }
 
+  _present = true;
+
   // configure for indoor use
   _bme.setSampling(Adafruit_BME280::MODE_NORMAL,
 		   Adafruit_BME280::SAMPLING_X2,

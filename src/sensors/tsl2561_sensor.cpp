@@ -31,6 +31,8 @@ void TSL2561_Sensor::begin() {
     Serial.println("TSL2561 not found");
     return;
   }
+
+  _present = true;
   
   _status = SENSOR_OKAY;
 

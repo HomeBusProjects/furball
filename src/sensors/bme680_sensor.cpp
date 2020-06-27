@@ -9,6 +9,8 @@ void BME680_Sensor::begin() {
     return;
   }
 
+  _present = true;
+
   _bme.setTemperatureOversampling(BME680_OS_2X);
   _bme.setHumidityOversampling(BME680_OS_1X);
   _bme.setPressureOversampling(BME680_OS_16X);

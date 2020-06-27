@@ -42,7 +42,9 @@ class Sensor {
     }
   };
 
-  virtual boolean ready_for_update() { if(_status == SENSOR_NOT_FOUND) return false; if( (millis() - _last_checked) >= _update_frequency) return true; else return false; }
+  virtual boolean ready_for_update() { if(_status == SENSOR_NOT_FOUND) return false; if( (millis() - _last_checked) >= _update_frequency) return true; else return false; };
+
+  boolean is_present() { return _present; };
 
  protected:
   void _mark_read() { _last_checked = millis(); };
@@ -59,4 +61,6 @@ class Sensor {
   boolean _calibrated = false;
 
   uint32_t _last_checked = 0;
+
+  boolean _present = false;
 };

@@ -62,6 +62,9 @@ void furball_setup() {
 }
 
 static boolean furball_air_update(char* buf, size_t buf_len, time_t now) {
+  if(!bme680.is_present())
+    return false;
+
   snprintf(buf,
 	   buf_len,
 	   "{ \"source\": \"%s\", \"timestamp\": %lu, \"org.homebus.experimental.air-sensor\": { \"temperature\": %.1f, \"humidity\": %.1f, \"pressure\": %.1f } }",
@@ -81,6 +84,9 @@ static boolean furball_air_update(char* buf, size_t buf_len, time_t now) {
 }
 
 static boolean furball_air_quality_update(char* buf, size_t buf_len, time_t now) {
+  if(!bme680.is_present() && !pms5003.is_present())
+    return false;
+
   uint16_t pm1 = pms5003.density_1_0();
   uint16_t pm25 = pms5003.density_2_5();
   uint16_t pm10 = pms5003.density_10_0();
@@ -108,6 +114,9 @@ static boolean furball_air_quality_update(char* buf, size_t buf_len, time_t now)
 }
 
 static boolean furball_light_update(char* buf, size_t buf_len, time_t now) {
+  if(!tsl2561.is_present())
+    return false;
+
   snprintf(buf,
 	   buf_len,
 	   "{ \"source\": \"%s\", \"timestamp\": %lu, \"org.homebus.experimental.light-sensor\": {  \"lux\": %d, \"full_light\": %d, \"ir\": %d, \"visible\": %d } }",
