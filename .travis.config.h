@@ -9,4 +9,7 @@
 #define WIFI_SSID3     "wifi name 3"
 #define WIFI_PASSWORD3 "wifi password 3"
 
+#define GMT_OFFSET_SECS  -8 * 60 * 60
+#define DAYLIGHT_SAVINGS_OFFSET_SECS 3600
+
 #define UPDATE_DELAY 60*1000
