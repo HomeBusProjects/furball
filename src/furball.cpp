@@ -1,5 +1,4 @@
 #include "furball.h"
-#include "diagnostics.h"
 
 #include <Arduino.h>
 #include <time.h>
@@ -12,7 +11,7 @@
 #include <multiball/homebus.h>
 
 #ifdef USE_DIAGNOSTICS
-#include <multiball/diagnostics.h>
+#include <diagnostics.h>
 #endif
 
 #include "sensors/bme680_sensor.h"
@@ -34,17 +33,6 @@ static PIR_Sensor pir(1, UPDATE_DELAY, 0, 0, false);
 static SoundLevel_Sensor sound_level(SOUND_PIN, UPDATE_DELAY, 0, 0, false);
 
 void furball_setup() {
-  configTime(GMT_OFFSET_SECS, DAYLIGHT_SAVINGS_OFFSET_SECS, "pool.ntp.org");
-
-  struct tm timeinfo;
-  if(!getLocalTime(&timeinfo)){
-    Serial.println("Failed to obtain time");
-    return;
-  }
-
-  Serial.println("[ntp]");
-  Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
-
   bme680.begin();
   Serial.println("[bme680]");
 
@@ -67,8 +55,7 @@ static boolean furball_air_update(char* buf, size_t buf_len, time_t now) {
 
   snprintf(buf,
 	   buf_len,
-	   "{ \"source\": \"%s\", \"timestamp\": %lu, \"org.homebus.experimental.air-sensor\": { \"temperature\": %.1f, \"humidity\": %.1f, \"pressure\": %.1f } }",
-	   homebus_uuid(), now,
+	   "{ \"temperature\": %.1f, \"humidity\": %.1f, \"pressure\": %.1f }",
 #ifdef TEMPERATURE_ADJUSTMENT
 	   bme680.temperature() + TEMPERATURE_ADJUSTMENT,
 #else
@@ -102,8 +89,7 @@ static boolean furball_air_quality_update(char* buf, size_t buf_len, time_t now)
 
   snprintf(buf,
 	   buf_len,
-	   "{ \"source\": \"%s\", \"timestamp\": %lu, \"org.homebus.experimental.air-quality-sensor\": {  \"tvoc\": %0.2f, \"pm1\": %d, \"pm25\": %d, \"pm10\": %d } }",
-	   homebus_uuid(), now,
+	   "{ \"tvoc\": %0.2f, \"pm1\": %d, \"pm25\": %d, \"pm10\": %d }",
 	   bme680.gas_resistance(), pm1, pm25, pm10);
 
 #ifdef VERBOSE
@@ -119,8 +105,7 @@ static boolean furball_light_update(char* buf, size_t buf_len, time_t now) {
 
   snprintf(buf,
 	   buf_len,
-	   "{ \"source\": \"%s\", \"timestamp\": %lu, \"org.homebus.experimental.light-sensor\": {  \"lux\": %d, \"full_light\": %d, \"ir\": %d, \"visible\": %d } }",
-	   homebus_uuid(), now,
+	   "{  \"lux\": %d, \"full_light\": %d, \"ir\": %d, \"visible\": %d }",
 	   tsl2561.lux(), tsl2561.full(), tsl2561.ir(), tsl2561.visible());
 
 #ifdef VERBOSE
@@ -134,8 +119,7 @@ static boolean furball_light_update(char* buf, size_t buf_len, time_t now) {
 static boolean furball_sound_update(char* buf, size_t buf_len, time_t now) {
   snprintf(buf,
 	   buf_len,
-	   "{ \"source\": \"%s\", \"timestamp\": %lu, \"org.homebus.experimental.sound-sensor\": { \"average\": %d, \"min\": %d, \"max\": %d, \"samples\": %d } }",
-	   homebus_uuid(), now,
+	   "{ \"average\": %d, \"min\": %d, \"max\": %d, \"samples\": %d }",
 	   sound_level.sound_level(), sound_level.sound_min(), sound_level.sound_max(), sound_level.sample_count()
 	   );
 
@@ -149,8 +133,7 @@ static boolean furball_sound_update(char* buf, size_t buf_len, time_t now) {
 static boolean furball_presence_update(char* buf, size_t buf_len, time_t now) {
   snprintf(buf,
 	   buf_len,
-	   "{ \"source\": \"%s\", \"timestamp\": %lu, \"org.homebus.experimental.presence-sensor\": { \"presence\": %s } }",
-	   homebus_uuid(), now,
+	   "{ \"presence\": %s }",
 	   pir.presence() ? "true" : "false"
 	   );
 
@@ -174,8 +157,7 @@ static boolean furball_system_update(char* buf, size_t buf_len, time_t now) {
 
   snprintf(buf,
 	   buf_len,
-	   "{ \"source\": \"%s\", \"timestamp\": %lu, \"org.homebus.experimental.furball-system\": { \"name\": \"%s\", \"platform\": %s, \"build\": \"%s\", \"ip\": \"%d.%d.%d.%d\", \"mac_addr\": \"%s\" } }",
-	   homebus_uuid(), now,
+	   "{ \"name\": \"%s\", \"platform\": \"%s\", \"build\": \"%s\", \"ip\": \"%d.%d.%d.%d\", \"mac_addr\": \"%s\" }",
 	   App.hostname().c_str(), "furball", App.build_info().c_str(), local[0], local[1], local[2], local[3], mac_address.c_str()
 	   );
 
@@ -187,8 +169,7 @@ static boolean furball_system_update(char* buf, size_t buf_len, time_t now) {
 }
 
 static boolean furball_diagnostic_update(char* buf, size_t buf_len, time_t now) {
-  snprintf(buf, buf_len, "{ \"source\": \"%s\", \"timestamp\": %lu, \"org.homebus.experimental.furball-diagnostic\": { \"freeheap\": %d, \"uptime\": %lu, \"rssi\": %d, \"reboots\": %d, \"wifi_failures\": %d } }",
-	   homebus_uuid(), now,
+  snprintf(buf, buf_len, "{ \"freeheap\": %d, \"uptime\": %lu, \"rssi\": %d, \"reboots\": %d, \"wifi_failures\": %d }",
 	   ESP.getFreeHeap(), uptime.uptime()/1000, WiFi.RSSI(), App.boot_count(), App.wifi_failures());
 
 #ifdef VERBOSE
@@ -235,10 +216,10 @@ void furball_loop() {
     homebus_publish_to("org.homebus.experimental.presence-sensor", buffer);
 
   if(furball_system_update(buffer, BUFFER_LENGTH, now))
-    homebus_publish_to("org.homebus.experimental.furball-system", buffer);
+    homebus_publish_to("org.homebus.experimental.system", buffer);
 
   if(furball_diagnostic_update(buffer, BUFFER_LENGTH, now))
-    homebus_publish_to("org.homebus.experimental.furball-diagnostic", buffer);
+    homebus_publish_to("org.homebus.experimental.diagnostic", buffer);
 }
 
 /* 

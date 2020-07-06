@@ -9,7 +9,7 @@
 #include <multiball/homebus.h>
 
 #ifdef USE_DIAGNOSTICS
-#include <multiball/diagnostics.h>
+#include <diagnostics.h>
 #endif
 
 #include <ESPmDNS.h>
@@ -18,7 +18,6 @@
 #include <SPIFFS.h>
 
 #include "furball.h"
-#include "diagnostics.h"
 
 MultiballApp App;
 
